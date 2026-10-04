@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FCF2F8">
+<title>Petal Cycle</title>
+<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap">
+<style>
+:root{
+  /* Layout: one 520px column. Hero is a segmented cycle ring with a day marker that travels around it. Floating tab bar. Bottom sheets for day detail and setup. */
+  --bg:#FCF2F8;--surface:#FFFFFF;--surface-2:#F9E9F3;--ink:#2B1734;--muted:#755F80;--line:#EBD9E8;--track:#F2E3EF;
+  --period:#E0336B;--on-period:#FFFFFF;--period-soft:#FFDCE8;--period-ink:#B3124A;
+  --fertile:#12877F;--fertile-soft:#D4F2EE;--fertile-ink:#0B5F59;
+  --ovu:#6B4EE6;--on-ovu:#FFFFFF;--ovu-soft:#E6E0FF;--ovu-ink:#4A2FC4;
+  --warn-soft:#FFE7D3;--warn-ink:#8F430A;--peach:#FFB48F;
+  --shadow:0 1px 2px rgba(86,24,74,.06),0 10px 28px rgba(86,24,74,.08);
+  --f-display:"Bricolage Grotesque","Avenir Next","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#170E1D;--surface:#241630;--surface-2:#2E1D3B;--ink:#F8ECF6;--muted:#BDA6C7;--line:#3D2A4B;--track:#33213F;
+  --period:#FF6A9A;--on-period:#2B0A1A;--period-soft:#4B2037;--period-ink:#FF9DBF;
+  --fertile:#3FCBC0;--fertile-soft:#153B3B;--fertile-ink:#8CE8DF;
+  --ovu:#A890FF;--on-ovu:#1E1240;--ovu-soft:#32265F;--ovu-ink:#CBBDFF;
+  --warn-soft:#4A2B14;--warn-ink:#FFC9A1;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#170E1D;--surface:#241630;--surface-2:#2E1D3B;--ink:#F8ECF6;--muted:#BDA6C7;--line:#3D2A4B;--track:#33213F;
+  --period:#FF6A9A;--on-period:#2B0A1A;--period-soft:#4B2037;--period-ink:#FF9DBF;
+  --fertile:#3FCBC0;--fertile-soft:#153B3B;--fertile-ink:#8CE8DF;
+  --ovu:#A890FF;--on-ovu:#1E1240;--ovu-soft:#32265F;--ovu-ink:#CBBDFF;
+  --warn-soft:#4A2B14;--warn-ink:#FFC9A1;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);color-scheme:dark}
+
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--f-body);padding-inline:16px;padding-block:8px 120px;-webkit-font-smoothing:antialiased}
+p,h1,h2,h3{margin:0}
+button{font-family:inherit}
+:focus-visible{outline:3px solid var(--ovu);outline-offset:2px}
+.app{max-width:520px;margin-inline:auto;display:flex;flex-direction:column;gap:14px}
+#view{display:flex;flex-direction:column;gap:14px}
+.muted{color:var(--muted)}
+.fine{font-size:12.5px;color:var(--muted);text-align:center;padding-inline:8px}
+
+.top{display:flex;align-items:center;justify-content:space-between;padding-block:10px 2px}
+.brand{display:flex;align-items:center;gap:10px;font:700 24px/1 var(--f-display);letter-spacing:-.02em}
+.brand svg{width:32px;height:32px}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
+
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--warn-soft);color:var(--warn-ink);border-radius:18px;padding:12px 14px;font-size:13.5px;font-weight:550}
+.banner .btn{min-height:40px;padding:10px 14px;font-size:13.5px;background:var(--surface);color:var(--ink);flex:none}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{font:650 18px/1.2 var(--f-display);letter-spacing:-.01em}
+.eyebrow{font:600 11px/1.2 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.hero{background:radial-gradient(120% 70% at 50% 0%,var(--period-soft) 0,var(--surface) 64%);align-items:center;text-align:center;gap:6px}
+.hl{font:700 29px/1.1 var(--f-display);letter-spacing:-.02em;text-wrap:balance}
+.hl-left{font:700 26px/1.12 var(--f-display);letter-spacing:-.02em;text-wrap:balance}
+.sub{color:var(--muted);text-wrap:balance}
+
+.ring{width:min(100%,264px);display:block;margin:4px auto 0}
+.track{fill:none;stroke:var(--track);stroke-width:16}
+.seg{fill:none;stroke-width:16}
+.s-p{stroke:var(--period)}.s-f{stroke:var(--line)}.s-fe{stroke:var(--fertile)}.s-o{stroke:var(--ovu)}.s-l{stroke:var(--ovu-soft)}
+.mk{fill:var(--surface);stroke:var(--ink);stroke-width:3}
+.r-small{font:600 11px var(--f-body);letter-spacing:.14em;fill:var(--muted);text-anchor:middle}
+.r-big{font:700 56px var(--f-display);fill:var(--ink);text-anchor:middle}
+.r-phase{font:650 13.5px var(--f-body);fill:var(--ink);text-anchor:middle}
+.anim .spin{transform-origin:110px 110px;animation:sweep .9s cubic-bezier(.2,.8,.2,1) both}
+.anim .mk-g{animation:fadein .5s .55s both}
+@keyframes sweep{from{opacity:0;transform:rotate(-70deg)}to{opacity:1;transform:rotate(0)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;font:600 12.5px/1.2 var(--f-body);background:var(--surface-2);color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:currentColor;display:block;flex:none}
+.pill.ok{background:var(--fertile-soft);color:var(--fertile-ink)}
+.s-per{background:var(--period-soft);color:var(--period-ink)}
+.s-pred{background:transparent;border:1.5px dashed var(--period);color:var(--period-ink)}
+.s-ov{background:var(--ovu-soft);color:var(--ovu-ink)}
+.s-fert{background:var(--fertile-soft);color:var(--fertile-ink)}
+
+.btn{appearance:none;border:0;border-radius:16px;padding:14px 18px;font:650 15px/1.1 var(--f-body);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;transition:transform .12s,filter .2s}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--period);color:var(--on-period);width:100%}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn.block{width:100%}
+.btn.warn{background:var(--period);color:var(--on-period)}
+button.link{background:none;border:0;padding:6px 0;color:var(--period-ink);font:650 14px var(--f-body);cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:36px;text-align:left}
+.logged{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:8px 14px;font:550 13.5px/1 var(--f-body);cursor:pointer;min-height:38px;transition:background .15s,color .15s}
+.chip[aria-pressed="true"]{background:var(--ovu);border-color:var(--ovu);color:var(--on-ovu)}
+.chip.fl[aria-pressed="true"]{background:var(--period);border-color:var(--period);color:var(--on-period)}
+.group-label{font:650 13px var(--f-body);margin-bottom:8px;display:block}
+
+.chance{display:flex;gap:14px;align-items:flex-start}
+.chance>div:last-child{display:flex;flex-direction:column;gap:6px;min-width:0}
+.badge{flex:none;border-radius:16px;padding:10px 12px;min-width:86px;text-align:center;font:700 16px/1.1 var(--f-display)}
+.badge small{display:block;font:600 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;opacity:.9}
+.lv-high{background:var(--ovu-soft);color:var(--ovu-ink)}
+.lv-medium{background:var(--fertile-soft);color:var(--fertile-ink)}
+.lv-low{background:var(--surface-2);color:var(--muted)}
+.lv-unsure{background:var(--warn-soft);color:var(--warn-ink)}
+
+.cal-head{display:flex;align-items:center;justify-content:space-between}
+.cal-head h2{font:650 19px var(--f-display)}
+.cal-head .icon-btn{width:40px;height:40px}
+.dow,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow span{text-align:center;font:600 11px var(--f-body);color:var(--muted);letter-spacing:.06em;padding-block:4px}
+.d{position:relative;aspect-ratio:1;max-width:100%;border-radius:14px;border:2px solid transparent;background:transparent;color:var(--ink);font:550 14px var(--f-body);cursor:pointer;display:grid;place-items:center;font-variant-numeric:tabular-nums;padding:0}
+.d.blank{visibility:hidden;pointer-events:none}
+.d.fert{background:var(--fertile-soft);color:var(--fertile-ink)}
+.d.ov{background:var(--ovu);color:var(--on-ovu);font-weight:700}
+.d.pred{border-style:dashed;border-color:var(--period);color:var(--period-ink)}
+.d.per{background:var(--period);color:var(--on-period);font-weight:700}
+.d.today{outline:2px solid var(--ink);outline-offset:-2px;font-weight:700}
+.d.has::after{content:"";position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.85}
+.days.rough .d.fert,.days.rough .d.ov{opacity:.55}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--muted)}
+.sw{width:14px;height:14px;border-radius:5px;display:inline-block;vertical-align:-2px;margin-right:6px;border:2px solid transparent}
+.sw.per{background:var(--period)}.sw.pred{border-color:var(--period);border-style:dashed}.sw.fert{background:var(--fertile-soft);border-color:var(--fertile)}.sw.ov{background:var(--ovu)}.sw.td{border-color:var(--ink)}
+
+details{border-top:1px solid var(--line)}
+details:first-of-type{border-top:0}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center;padding-block:14px;font:650 16px/1.3 var(--f-display)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font:500 24px/1 var(--f-body);color:var(--muted);flex:none}
+details[open] summary::after{content:"\2212"}
+details .body{padding-bottom:14px;display:flex;flex-direction:column;gap:10px}
+details ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.callout{background:var(--ovu-soft);color:var(--ovu-ink);border-radius:16px;padding:12px 14px;font-weight:550}
+.callout.warn{background:var(--warn-soft);color:var(--warn-ink)}
+.rows{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:10px}
+.row:last-child{border-bottom:0;padding-bottom:0}
+.row span:first-child{color:var(--muted)}
+.row b{font-variant-numeric:tabular-nums;text-align:right}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font:650 13.5px var(--f-body)}
+input[type=date],input[type=email],select{width:100%;min-height:50px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 14px;font:500 15px var(--f-body)}
+.hint{font-size:12.5px;color:var(--muted)}
+.err{color:var(--period-ink);font-weight:650;font-size:13.5px;min-height:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two>*{min-width:0}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface-2);border-radius:16px;padding:12px}
+.stat b{display:block;font:700 26px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);display:block;margin-top:6px;line-height:1.25}
+.chart{width:100%;height:auto;display:block}
+.band{fill:var(--fertile-soft)}
+.axis{stroke:var(--line);stroke-width:1}
+.tick{font:500 10px var(--f-body);fill:var(--muted)}
+.bar{fill:var(--period)}.bar.odd{fill:var(--muted)}
+.avg{stroke:var(--ovu);stroke-dasharray:4 4;stroke-width:1.6}
+.val{font:700 10.5px var(--f-body);fill:var(--ink);text-anchor:middle}
+.xl{font:500 9.5px var(--f-body);fill:var(--muted);text-anchor:middle}
+textarea{width:100%;min-height:120px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink);padding:12px;font:12px/1.4 ui-monospace,Menlo,monospace}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
+@supports (background:color-mix(in srgb,red,blue)){.tabs{background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(12px)}}
+.tabs-in{max-width:520px;margin-inline:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.tab{border:0;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:14px;font:600 11.5px var(--f-body);cursor:pointer}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-current="page"]{color:var(--period-ink);background:var(--period-soft)}
+
+.sheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.scrim{position:absolute;inset:0;background:rgba(30,10,40,.5);animation:fadein .2s both}
+.panel{position:relative;width:min(100%,520px);max-height:90%;overflow:auto;background:var(--surface);color:var(--ink);border-radius:26px 26px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:16px;animation:rise .3s cubic-bezier(.2,.8,.2,1) both}
+.panel:focus{outline:none}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sheet-head h2{font:700 26px/1.1 var(--f-display);letter-spacing:-.02em}
+.sheet-head .icon-btn{flex:none;width:40px;height:40px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;font:600 13.5px var(--f-body);z-index:60;max-width:calc(100% - 32px);text-align:center}
+
+.hbtns{display:flex;gap:8px}
+#acct-btn{position:relative}
+.dot{position:absolute;top:6px;right:6px;width:10px;height:10px;border-radius:50%;background:var(--muted);border:2px solid var(--surface)}
+.dot.ok{background:var(--fertile)}.dot.busy{background:var(--ovu)}.dot.err{background:var(--period)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45}
+.check input{width:20px;height:20px;margin-top:1px;accent-color:var(--period);flex:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <g fill="var(--period)">
+          <ellipse cx="16" cy="8" rx="4.4" ry="7" opacity=".95"/>
+          <ellipse cx="16" cy="8" rx="4.4" ry="7" opacity=".85" transform="rotate(72 16 16)"/>
+          <ellipse cx="16" cy="8" rx="4.4" ry="7" opacity=".95" transform="rotate(144 16 16)"/>
+          <ellipse cx="16" cy="8" rx="4.4" ry="7" opacity=".85" transform="rotate(216 16 16)"/>
+          <ellipse cx="16" cy="8" rx="4.4" ry="7" opacity=".95" transform="rotate(288 16 16)"/>
+        </g>
+        <circle cx="16" cy="16" r="3.6" fill="var(--peach)"/>
+      </svg>
+      Petal
+    </div>
+    <div class="hbtns"><button class="icon-btn" id="acct-btn" data-act="acct" hidden aria-label="Account and sync"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><i class="dot" id="acct-dot"></i></button><button class="icon-btn" data-act="theme" aria-label="Switch light or dark theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
+    </button></div>
+  </header>
+  <div id="banner"></div>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" aria-label="Main">
+  <div class="tabs-in">
+    <button class="tab" data-act="tab" data-v="today"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>Today</button>
+    <button class="tab" data-act="tab" data-v="cal"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Calendar</button>
+    <button class="tab" data-act="tab" data-v="learn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>Safer sex</button>
+    <button class="tab" data-act="tab" data-v="insights"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 20v-9M12 20V5M18 20v-6"/></svg>Insights</button>
+  </div>
+</nav>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="scrim" data-act="close"></div>
+  <div class="panel" id="panel" tabindex="-1" role="dialog" aria-modal="true"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script>
+(function(){
+'use strict';
+/* ---- Supabase settings: paste your own two values here (see README.md) ---- */
+var SUPABASE_URL='PASTE_YOUR_PROJECT_URL_HERE';
+var SUPABASE_KEY='PASTE_YOUR_PUBLISHABLE_OR_ANON_KEY_HERE';
+var CLOUD=/^https:\/\/[a-z0-9-]+\.supabase\.co/.test(SUPABASE_URL)&&SUPABASE_KEY.indexOf('PASTE_')!==0&&typeof window.supabase!=='undefined';
+var sb=CLOUD?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+var user=null,syncState='off',pushTimer=null,pending=false,linkSent='',acctConfirm=false;
+
+var DAY=86400000;
+function pad(n){return String(n).padStart(2,'0')}
+function num(y,m,d){return Math.floor(Date.UTC(y,m,d)/DAY)}
+var now=new Date();
+var TODAY=num(now.getFullYear(),now.getMonth(),now.getDate());
+function fmt(n,o){return new Intl.DateTimeFormat('en-US',Object.assign({timeZone:'UTC'},o)).format(new Date(n*DAY))}
+function keyOf(n){var d=new Date(n*DAY);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())}
+function fromKey(k){var p=k.split('-').map(Number);return num(p[0],p[1]-1,p[2])}
+function short(n){return fmt(n,{month:'short',day:'numeric'})}
+function long(n){return fmt(n,{weekday:'long',month:'long',day:'numeric'})}
+function plural(n,w){return n+' '+w+(n===1?'':'s')}
+function $(s){return document.querySelector(s)}
+
+var KEY='petal.cycle.v1',THEME='petal.theme';
+function readStore(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
+function writeStore(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function persist(){if(S.demo)return;S.updatedAt=Date.now();writeStore();schedulePush()}
+
+function demo(){
+  var lens=[29,28,31,27,29],last=TODAY-11,starts=[last];
+  for(var i=0;i<lens.length;i++)starts.unshift(starts[0]-lens[i]);
+  var pl=[5,4,5,6,5,5],period=[];
+  starts.forEach(function(s,i){for(var d=0;d<pl[i];d++)period.push(s+d)});
+  var log={};log[TODAY-1]={mood:['Calm'],sym:[],flow:''};
+  return {period:period,log:log,cycleLen:28,periodLen:5,demo:true};
+}
+var S=readStore();
+if(!S||!Array.isArray(S.period))S=demo();
+S.log=S.log||{};S.cycleLen=S.cycleLen||28;S.periodLen=S.periodLen||5;
+
+var A,PSET,MAP;
+var tab='today',cal={y:now.getFullYear(),m:now.getMonth()},animate=true,eraseAsk=false,sheetKind=null,lastFocus=null;
+
+/* ---------- prediction engine ---------- */
+function analyze(){
+  var days=Array.from(new Set(S.period)).sort(function(a,b){return a-b});
+  var runs=[];
+  days.forEach(function(d){var l=runs[runs.length-1];if(l&&d-l.end<=2)l.end=d;else runs.push({start:d,end:d})});
+  var gaps=[];for(var i=1;i<runs.length;i++)gaps.push(runs[i].start-runs[i-1].start);
+  var valid=gaps.filter(function(g){return g>=18&&g<=60}).slice(-6);
+  var n=valid.length,L=S.cycleLen,sd=0,mn=null,mx=null,mean=null;
+  if(n){
+    var sw=0,sx=0;
+    valid.forEach(function(g,i){sw+=i+1;sx+=(i+1)*g});
+    if(n<3){sw+=1;sx+=S.cycleLen}
+    L=Math.round(sx/sw);
+    mean=valid.reduce(function(a,b){return a+b},0)/n;
+    sd=Math.sqrt(valid.reduce(function(a,b){return a+(b-mean)*(b-mean)},0)/n);
+    mn=Math.min.apply(null,valid);mx=Math.max.apply(null,valid);
+  }
+  var done=runs.filter(function(r,i){return !(i===runs.length-1&&r.end>=TODAY-1)}).slice(-6);
+  var P=done.length?Math.round(done.reduce(function(a,r){return a+(r.end-r.start+1)},0)/done.length):S.periodLen;
+  P=Math.min(10,Math.max(2,P));
+  var spread=n>=2?Math.min(7,Math.max(1,Math.round(sd))):3;
+  return {runs:runs,gaps:gaps,valid:valid,n:n,L:L,sd:sd,mn:mn,mx:mx,mean:mean,P:P,spread:spread,
+    irregular:n>=3&&(sd>=4.5||(mx-mn)>=9),learning:n<3,last:runs.length?runs[runs.length-1]:null};
+}
+var RANK={medium:1,high:2};
+function buildMap(){
+  var map={};
+  function set(n,k,v){var e=map[n]||(map[n]={});e[k]=v===undefined?true:v}
+  var cycles=[];
+  for(var i=0;i<A.runs.length-1;i++){
+    var g=A.runs[i+1].start-A.runs[i].start;
+    if(g>=18&&g<=60)cycles.push({start:A.runs[i].start,next:A.runs[i+1].start,pred:false});
+  }
+  for(var k=0;k<7;k++){var s=A.last.start+k*A.L;cycles.push({start:s,next:s+A.L,pred:true,k:k})}
+  cycles.forEach(function(c){
+    var ov=c.next-14;
+    for(var d=ov-5;d<=ov+1;d++){
+      var lv=(d>=ov-2&&d<=ov)?'high':'medium';
+      var cur=map[d]&&map[d].lvl;
+      if(!cur||RANK[lv]>RANK[cur])set(d,'lvl',lv);
+      set(d,'fertile');
+    }
+    set(ov,'ov');
+    if(c.pred&&c.k>=1){for(var j=0;j<A.P;j++)set(c.start+j,'pred')}
+  });
+  return map;
+}
+function compute(){A=analyze();PSET=new Set(S.period);MAP=A.last?buildMap():{}}
+
+function chanceFor(n){
+  var T={
+    high:['High','Close to ovulation. This is when pregnancy is most likely.'],
+    medium:['Medium','Inside the fertile window. Pregnancy is possible.'],
+    low:['Lower','Pregnancy is less likely on this day, but it can still happen.'],
+    unsure:['Unsure','Your cycle varies too much to tell. Treat any day as possible.']
+  };
+  var lvl,text;
+  if(!A.last||n<A.runs[0].start||n>A.last.start+6*A.L)lvl='unsure';
+  else if(PSET.has(n))lvl='low';
+  else if(A.irregular)lvl='unsure';
+  else lvl=(MAP[n]&&MAP[n].lvl)||'low';
+  text=T[lvl][1];
+  if(PSET.has(n)&&lvl==='low')text='On your period. Pregnancy is less likely, but still possible.';
+  if(A.learning&&lvl!=='unsure')text+=' Petal is still learning your pattern, so this is a rough guess.';
+  return {lvl:lvl,label:T[lvl][0],text:text};
+}
+function phaseNow(){
+  if(PSET.has(TODAY))return 'period';
+  var ov=A.last.start+A.L-14;
+  if(TODAY<ov-5)return 'follicular';
+  if(TODAY===ov)return 'ovulation';
+  if(TODAY<=ov+1)return 'fertile';
+  return 'luteal';
+}
+var PH={
+  period:{label:'Period',title:'Go gently',text:'Your uterus lining is shedding, which is why cramps and tiredness can show up. Warmth, water, iron-rich food like beans, eggs or leafy greens, and extra sleep can help. Pregnancy is less likely now, though not impossible.'},
+  follicular:{label:'Rising',title:'Energy is building',text:'Estrogen climbs as an egg matures. Many people feel more focused and social. The chance of pregnancy is low right now, and it starts to rise a few days before ovulation.'},
+  fertile:{label:'Fertile',title:'Fertile window',text:'An egg is about to be released, or just was. Sperm can survive up to 5 days, so pregnancy is possible on these days. Use protection every time if you are not trying to get pregnant.'},
+  ovulation:{label:'Ovulation',title:'Likely ovulation day',text:'Ovulation is estimated for around today, the peak of your fertile window. Some people notice clear, stretchy discharge or mild one-sided cramping.'},
+  luteal:{label:'Pre-period',title:'Winding down',text:'Progesterone rises, then drops before your period. Cravings, bloating, sore breasts and mood swings are common. The chance of pregnancy is lower now, and your period is on its way.'}
+};
+var MOODS=['Happy','Calm','Tired','Anxious','Sad','Irritable'];
+var SYMS=['Cramps','Headache','Bloating','Back pain','Acne','Cravings','Nausea','Tender breasts'];
+var FLOWS=['Spotting','Light','Medium','Heavy'];
+
+/* ---------- views ---------- */
+function ringSVG(cd,ph){
+  var L=A.L,P=A.P,R=86,C=2*Math.PI*R;
+  var ov=Math.max(P+2,L-14),fs=Math.max(P+1,ov-5),fe=Math.min(L,ov+1);
+  function seg(a,b,c){
+    if(b<a)return '';
+    var len=(b-a+1)/L*C,gap=Math.min(2.5,len*.25),off=-((a-1)/L*C)-gap/2;
+    return '<circle class="seg '+c+'" cx="110" cy="110" r="'+R+'" stroke-dasharray="'+(len-gap).toFixed(2)+' '+(C-len+gap).toFixed(2)+'" stroke-dashoffset="'+off.toFixed(2)+'"/>';
+  }
+  var segs=seg(1,P,'s-p')+seg(P+1,fs-1,'s-f')+seg(fs,ov-1,'s-fe')+seg(ov,ov,'s-o')+seg(ov+1,fe,'s-fe')+seg(fe+1,L,'s-l');
+  var pos=Math.min(Math.max(cd,1),L)-.5,ang=pos/L*2*Math.PI-Math.PI/2;
+  var mx=110+R*Math.cos(ang),my=110+R*Math.sin(ang);
+  var dot={period:'var(--period)',fertile:'var(--fertile)',ovulation:'var(--ovu)'}[ph]||'var(--muted)';
+  return '<svg class="ring" viewBox="0 0 220 220" role="img" aria-label="Cycle day '+cd+' of about '+L+'. '+PH[ph].label+'.">'+
+    '<circle class="track" cx="110" cy="110" r="'+R+'"/>'+
+    '<g class="spin"><g transform="rotate(-90 110 110)">'+segs+'</g></g>'+
+    '<g class="mk-g"><circle class="mk" cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="11"/><circle cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="4.5" fill="'+dot+'"/></g>'+
+    '<text class="r-small" x="110" y="90">DAY</text><text class="r-big" x="110" y="136">'+cd+'</text><text class="r-phase" x="110" y="160">'+PH[ph].label+'</text></svg>';
+}
+function chips(list,key,n,cls){
+  var cur=(S.log[n]&&S.log[n][key])||(key==='flow'?'':[]);
+  return '<div class="chips">'+list.map(function(v){
+    var on=key==='flow'?cur===v:cur.indexOf(v)>=0;
+    return '<button class="chip '+(cls||'')+'" data-act="tag" data-k="'+key+'" data-v="'+v+'" data-n="'+n+'" aria-pressed="'+on+'">'+v+'</button>';
+  }).join('')+'</div>';
+}
+function viewToday(){
+  if(!A.last)return '<section class="card hero"><h1 class="hl">Let’s find your pattern</h1><p class="sub">Add the first day of your last period and Petal starts predicting your next one.</p><button class="btn primary" data-act="setup" style="margin-top:10px">Add my last period</button></section>';
+  var cd=TODAY-A.last.start+1,next=A.last.start+A.L,ph=phaseNow(),inP=PSET.has(TODAY),late=TODAY-next,head,sub;
+  if(inP){head='Period day '+cd;sub='Usually lasts about '+A.P+' days. Next one around '+short(next)+'.'}
+  else if(late>0){head='Period is '+plural(late,'day')+' late';sub='Stress, travel or illness can shift your cycle.'}
+  else if(late===0){head='Period expected today';sub='Usually within '+plural(A.spread,'day')+' either way.'}
+  else{head='Period in '+plural(-late,'day');sub='Around '+short(next)+', give or take '+plural(A.spread,'day')+'.'}
+  var conf=A.learning?'Learning your pattern · '+plural(A.n,'cycle')+' so far':
+    A.irregular?'Cycles vary ('+A.mn+' to '+A.mx+' days), so predictions are rough':'Steady pattern · about '+A.L+' days';
+  var cta;
+  if(inP)cta='<div class="logged"><span class="pill ok"><i></i>Logged for today</span><button class="link" data-act="undo-today">Undo</button></div>';
+  else if(PSET.has(TODAY-1))cta='<button class="btn primary" data-act="start-today">Still bleeding today</button>';
+  else cta='<button class="btn primary" data-act="start-today">My period started today</button>';
+  var ch=chanceFor(TODAY),p=PH[ph];
+  var lateNote=(!inP&&late>=3)?'<p class="callout warn">If you have had sex without protection and your period is late, a pregnancy test is a good idea.</p>':'';
+  return '<section class="card hero"><p class="eyebrow">'+long(TODAY)+'</p>'+ringSVG(cd,ph)+
+    '<h1 class="hl">'+head+'</h1><p class="sub">'+sub+'</p>'+
+    '<div style="margin-block:6px"><span class="pill"><i></i>'+conf+'</span></div>'+cta+'</section>'+lateNote+
+    '<section class="card"><div class="chance"><div class="badge lv-'+ch.lvl+'"><small>Today</small>'+ch.label+'</div><div><h2>Chance of pregnancy</h2><p class="muted">'+ch.text+'</p><button class="link" data-act="tab" data-v="learn">Open the safer sex guide</button></div></div></section>'+
+    '<section class="card"><p class="eyebrow">How are you today?</p>'+
+      '<div><span class="group-label">Mood</span>'+chips(MOODS,'mood',TODAY)+'</div>'+
+      '<div><span class="group-label">Body</span>'+chips(SYMS,'sym',TODAY)+'</div>'+
+      (inP?'<div><span class="group-label">Flow</span>'+chips(FLOWS,'flow',TODAY,'fl')+'</div>':'')+'</section>'+
+    '<section class="card"><p class="eyebrow">What is happening</p><h2>'+p.title+'</h2><p>'+p.text+'</p></section>';
+}
+function viewCal(){
+  var first=num(cal.y,cal.m,1),dim=num(cal.y,cal.m+1,1)-first,wd=new Date(first*DAY).getUTCDay(),cells='';
+  for(var i=0;i<wd;i++)cells+='<span class="d blank"></span>';
+  for(var j=0;j<dim;j++){
+    var n=first+j,m=MAP[n]||{},isP=PSET.has(n),cls=['d'],tag='';
+    if(isP){cls.push('per');tag='period day'}
+    else if(m.pred){cls.push('pred');tag='expected period'}
+    else if(m.ov){cls.push('ov');tag='estimated ovulation'}
+    else if(m.fertile){cls.push('fert');tag='fertile window'}
+    if(n===TODAY)cls.push('today');
+    var lg=S.log[n];
+    if(lg&&((lg.mood&&lg.mood.length)||(lg.sym&&lg.sym.length)||lg.flow))cls.push('has');
+    cells+='<button class="'+cls.join(' ')+'" data-act="day" data-n="'+n+'" aria-label="'+fmt(n,{month:'long',day:'numeric'})+(tag?', '+tag:'')+(n===TODAY?', today':'')+'">'+(j+1)+'</button>';
+  }
+  var chev=function(d){return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'"/></svg>'};
+  return '<section class="card"><div class="cal-head"><button class="icon-btn" data-act="cal-prev" aria-label="Previous month">'+chev('M15 5l-7 7 7 7')+'</button><h2>'+fmt(first,{month:'long',year:'numeric'})+'</h2><button class="icon-btn" data-act="cal-next" aria-label="Next month">'+chev('M9 5l7 7-7 7')+'</button></div>'+
+    '<div class="dow" aria-hidden="true"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>'+
+    '<div class="days'+(A.irregular?' rough':'')+'">'+cells+'</div>'+
+    '<div class="legend"><span><i class="sw per"></i>Period</span><span><i class="sw pred"></i>Expected period</span><span><i class="sw fert"></i>Fertile window</span><span><i class="sw ov"></i>Ovulation</span><span><i class="sw td"></i>Today</span></div>'+
+    (A.irregular?'<p class="callout warn">Your cycle varies a lot, so fertile days are rough guesses.</p>':'')+
+    '<p class="hint">Tap any day to log your period, mood or symptoms. A dot under a date means you logged something.</p></section>';
+}
+function dateCard(n){
+  if(!A.last)return '<p class="muted">Add your last period first so Petal has something to work from.</p>';
+  var c=chanceFor(n);
+  return '<div class="chance"><div class="badge lv-'+c.lvl+'"><small>'+short(n)+'</small>'+c.label+'</div><div><p><strong>'+long(n)+'</strong></p><p class="muted">'+c.text+'</p></div></div>';
+}
+function windowsCard(){
+  if(!A.last)return '<p class="muted">Your windows appear after you log a period.</p>';
+  var ov=A.last.start+A.L-14,next=A.last.start+A.L;
+  while(ov+1<TODAY){ov+=A.L;next+=A.L}
+  var warn=A.irregular?'<p class="callout warn">Your cycles range from '+A.mn+' to '+A.mx+' days, so Petal cannot pin down a safe window. Use protection every time.</p>':
+    (A.learning?'<p class="callout">Petal is still learning. Log a few more periods to sharpen these dates.</p>':'');
+  return warn+'<div class="rows"><div class="row"><span>Fertile window</span><b>'+short(ov-5)+' to '+short(ov+1)+'</b></div>'+
+    '<div class="row"><span>Likely ovulation</span><b>'+short(ov)+'</b></div>'+
+    '<div class="row"><span>Lower-chance days</span><b>'+short(ov+2)+' until your period (about '+short(next)+')</b></div></div>'+
+    '<p class="hint">These are estimates from your logged cycles. Lower chance never means no chance.</p>';
+}
+function viewLearn(){
+  return '<section class="card"><p class="eyebrow">Safer sex guide</p><h1 class="hl-left">Higher and lower chance days</h1>'+
+    '<p>Petal shows when pregnancy is more or less likely. These are estimates, so a condom or another method is still the safest choice. Only condoms also protect against STIs.</p></section>'+
+    '<section class="card"><h2>Check any date</h2><div class="field"><label for="chk">Pick a date</label><input type="date" id="chk" value="'+keyOf(TODAY)+'"></div><div id="chk-out">'+dateCard(TODAY)+'</div></section>'+
+    '<section class="card"><h2>Your next windows</h2>'+windowsCard()+'</section>'+
+    '<section class="card" style="gap:0">'+
+    '<details><summary>How the fertile window works</summary><div class="body"><p>Ovulation usually happens about 12 to 16 days before your next period starts. The egg lives for about a day. Sperm can live up to 5 days inside the body.</p><p>That is why the days before ovulation count too. The fertile window is about 6 days long. Petal marks it from 5 days before the estimated ovulation day to 1 day after.</p></div></details>'+
+    '<details><summary>Why tracking alone can fail</summary><div class="body"><p>Ovulation can move because of stress, illness, travel, poor sleep or stopping hormonal birth control. Teens and people with irregular cycles are more likely to ovulate at unexpected times.</p><p>Methods that rely on counting days alone fail for roughly 2 to 23 in 100 people each year, according to the US CDC. They work best together with a condom or another method.</p></div></details>'+
+    '<details><summary>Condoms and STIs</summary><div class="body"><p>Cycle tracking does not protect against STIs. A condom used correctly every time lowers the chance of both pregnancy and most STIs.</p><ul><li>Check the expiry date.</li><li>Use a new one each time, and never two at once.</li><li>Regular STI testing is normal and nothing to be embarrassed about.</li><li>Vaccines for HPV and hepatitis B add protection.</li></ul></div></details>'+
+    '<details><summary>If a condom breaks or you had sex without protection</summary><div class="body"><p>Emergency contraception lowers the chance of pregnancy, and it works better the sooner you use it. Pills are best within 3 days, and some types work up to 5 days. A copper IUD fitted by a clinician within 5 days is the most effective option.</p><p>A pharmacist or clinic can help you choose. Take a pregnancy test if your period is more than a week late, and think about STI testing too.</p></div></details>'+
+    '<details><summary>Consent and feeling ready</summary><div class="body"><p>You decide what happens with your body. Saying yes once does not mean yes every time, and you can stop at any point.</p><p>Being ready means feeling safe, not pressured, and able to talk about protection. If something happened that you did not want, you can tell a trusted adult or a health worker. It is not your fault.</p></div></details>'+
+    '<details><summary>When to see a doctor</summary><div class="body"><ul><li>No period for 3 months or more, and you are not pregnant.</li><li>Cycles often shorter than 21 days or longer than 45 days.</li><li>Bleeding for more than 7 days.</li><li>Soaking through a pad or tampon every hour for several hours.</li><li>Pain strong enough to stop your normal day.</li><li>Bleeding between periods or after sex.</li></ul></div></details>'+
+    '</section>'+
+    '<p class="fine">Petal gives general information and estimates. It is not medical advice and it is not birth control.</p>';
+}
+function chartSVG(){
+  var g=A.gaps.map(function(len,i){return {len:len,start:A.runs[i].start}}).slice(-8);
+  if(!g.length)return '<p class="muted">Log at least two periods to see your cycle lengths here.</p>';
+  var W=320,H=176,l=26,r=6,t=16,b=26,pw=W-l-r,ph=H-t-b;
+  var maxY=Math.ceil((Math.max(35,Math.max.apply(null,g.map(function(x){return x.len})))+3)/14)*14;
+  function y(v){return t+ph-(v/maxY)*ph}
+  var out='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bar chart of your last '+g.length+' cycle lengths in days">';
+  out+='<rect class="band" x="'+l+'" y="'+y(35).toFixed(1)+'" width="'+pw+'" height="'+(y(21)-y(35)).toFixed(1)+'"/>';
+  for(var v=0;v<=maxY;v+=14){out+='<line class="axis" x1="'+l+'" x2="'+(W-r)+'" y1="'+y(v).toFixed(1)+'" y2="'+y(v).toFixed(1)+'"/><text class="tick" x="'+(l-5)+'" y="'+(y(v)+3.5).toFixed(1)+'" text-anchor="end">'+v+'</text>'}
+  var slot=pw/g.length,bw=Math.min(28,slot*.6);
+  g.forEach(function(x,i){
+    var bx=l+slot*i+(slot-bw)/2,odd=x.len<18||x.len>60;
+    out+='<rect class="bar'+(odd?' odd':'')+'" x="'+bx.toFixed(1)+'" y="'+y(x.len).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+(y(0)-y(x.len)).toFixed(1)+'" rx="5"/>'+
+      '<text class="val" x="'+(bx+bw/2).toFixed(1)+'" y="'+(y(x.len)-4).toFixed(1)+'">'+x.len+'</text>'+
+      '<text class="xl" x="'+(bx+bw/2).toFixed(1)+'" y="'+(H-8)+'">'+short(x.start)+'</text>';
+  });
+  if(A.mean)out+='<line class="avg" x1="'+l+'" x2="'+(W-r)+'" y1="'+y(A.mean).toFixed(1)+'" y2="'+y(A.mean).toFixed(1)+'"/>';
+  return out+'</svg>';
+}
+function viewInsights(){
+  var opts=function(a,b,sel){var s='';for(var i=a;i<=b;i++)s+='<option value="'+i+'"'+(i===sel?' selected':'')+'>'+i+' days</option>';return s};
+  var erase=eraseAsk?
+    '<p class="callout warn">This removes every period and note you logged'+(user?', including the copy in your account':'')+'. It cannot be undone.</p><div class="two"><button class="btn ghost" data-act="erase-cancel">Keep my data</button><button class="btn warn" data-act="erase-yes">Erase everything</button></div>':
+    '<div class="two"><button class="btn ghost" data-act="copy">Copy my data</button><button class="btn ghost" data-act="erase">Erase my data</button></div>';
+  return '<section class="card"><p class="eyebrow">Your pattern</p><div class="stats">'+
+    '<div class="stat"><b>'+(A.mean?Math.round(A.mean):'–')+'</b><span>Average cycle, days</span></div>'+
+    '<div class="stat"><b>'+(A.runs.length?A.P:'–')+'</b><span>Average period, days</span></div>'+
+    '<div class="stat"><b>'+A.runs.length+'</b><span>Periods logged</span></div></div></section>'+
+    '<section class="card"><h2>Cycle length over time</h2>'+chartSVG()+
+    '<p class="hint">The shaded band is the typical range of 21 to 35 days. The dashed line is your average. Petal weights recent cycles more, so predictions follow your latest pattern.</p></section>'+
+    '<section class="card"><h2>Starting numbers</h2><p class="muted">Petal uses these until it has learned from at least 3 of your cycles.</p><div class="two">'+
+    '<div class="field"><label for="set-c">Typical cycle</label><select id="set-c">'+opts(21,45,S.cycleLen)+'</select></div>'+
+    '<div class="field"><label for="set-p">Typical period</label><select id="set-p">'+opts(2,10,S.periodLen).replace(/days/g,'days')+'</select></div></div></section>'+
+    '<section class="card"><h2>Your data</h2><p class="muted">'+(user?'Your data is saved to your account and also kept on this device.':'Everything stays in this browser on this device. Nothing is sent anywhere unless you sign in. Clearing your browser data also clears Petal, so sign in or copy your data for a backup.')+'</p>'+
+    '<div id="copy-area"></div>'+(CLOUD?'<button class="btn ghost block" data-act="acct">'+(user?'Manage my account':'Sign in to back up and sync')+'</button>':'')+erase+'</section>';
+}
+
+/* ---------- sheets ---------- */
+function openSheet(kind){
+  sheetKind=kind;lastFocus=document.activeElement;
+  $('#sheet').hidden=false;
+  panel.innerHTML=kind.t==='day'?dayHTML(kind.n):kind.t==='acct'?acctHTML():setupHTML(kind.demo);
+  panel.scrollTop=0;panel.focus();
+}
+function closeSheet(){
+  sheetKind=null;$('#sheet').hidden=true;panel.innerHTML='';
+  if(lastFocus&&lastFocus.focus&&document.contains(lastFocus))lastFocus.focus();
+}
+function dayHTML(n){
+  var m=MAP[n]||{},isP=PSET.has(n),fut=n>TODAY,out='',pills='';
+  if(isP)pills+='<span class="pill s-per"><i></i>Period day</span>';
+  else if(m.pred)pills+='<span class="pill s-pred"><i></i>Expected period</span>';
+  if(!isP&&m.ov)pills+='<span class="pill s-ov"><i></i>Estimated ovulation</span>';
+  else if(!isP&&m.fertile)pills+='<span class="pill s-fert"><i></i>Fertile window</span>';
+  out+='<div class="sheet-head"><div><p class="eyebrow">'+fmt(n,{weekday:'long',year:'numeric'})+'</p><h2>'+fmt(n,{month:'long',day:'numeric'})+'</h2></div><button class="icon-btn" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>';
+  if(pills)out+='<div class="pills">'+pills+'</div>';
+  if(A.last){var c=chanceFor(n);out+='<div class="chance"><div class="badge lv-'+c.lvl+'"><small>Chance</small>'+c.label+'</div><p class="muted">'+c.text+'</p></div>'}
+  if(fut){out+='<p class="muted">You can log your period, mood and symptoms once this day arrives.</p>';return out}
+  if(isP)out+='<button class="btn ghost block" data-act="period" data-v="off" data-n="'+n+'">Remove period day</button>';
+  else out+='<button class="btn primary" data-act="period" data-v="on" data-n="'+n+'">Mark as period day</button><button class="btn ghost block" data-act="fill" data-n="'+n+'">Period started here and lasts '+A.P+' days</button>';
+  if(isP)out+='<div><span class="group-label">Flow</span>'+chips(FLOWS,'flow',n,'fl')+'</div>';
+  out+='<div><span class="group-label">Mood</span>'+chips(MOODS,'mood',n)+'</div><div><span class="group-label">Body</span>'+chips(SYMS,'sym',n)+'</div>';
+  return out;
+}
+function setupHTML(fromDemo){
+  var opts=function(a,b,sel){var s='';for(var i=a;i<=b;i++)s+='<option value="'+i+'"'+(i===sel?' selected':'')+'>'+i+' days</option>';return s};
+  return '<div class="sheet-head"><div><p class="eyebrow">'+(fromDemo?'Add your dates first':'Set up')+'</p><h2>Your last period</h2></div><button class="icon-btn" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+    '<div class="field"><label for="su-date">First day of your last period</label><input type="date" id="su-date" max="'+keyOf(TODAY)+'"></div>'+
+    '<div class="field"><label for="su-date2">First day of the period before that (optional)</label><input type="date" id="su-date2" max="'+keyOf(TODAY)+'"><p class="hint">Adding this lets Petal measure one full cycle right away.</p></div>'+
+    '<div class="two"><div class="field"><label for="su-p">Period lasts</label><select id="su-p">'+opts(2,10,5)+'</select></div><div class="field"><label for="su-c">Cycle usually</label><select id="su-c">'+opts(21,45,28)+'</select></div></div>'+
+    '<p class="hint">Not sure? Leave 5 and 28. Petal adjusts as you log each period.</p><p class="err" id="su-err" role="alert"></p>'+
+    '<button class="btn primary" data-act="setup-save">Start tracking</button>';
+}
+function saveSetup(){
+  var v=$('#su-date').value,v2=$('#su-date2').value,P=+$('#su-p').value,C=+$('#su-c').value,err=$('#su-err');
+  if(!v){err.textContent='Pick the first day of your last period.';return}
+  var a=fromKey(v);
+  if(a>TODAY){err.textContent='That date is in the future.';return}
+  var period=[];
+  function add(s){for(var d=0;d<P;d++){if(s+d<=TODAY)period.push(s+d)}}
+  add(a);
+  if(v2){
+    var b=fromKey(v2);
+    if(a-b<18){err.textContent='The earlier period should start at least 18 days before your last one.';return}
+    if(a-b>60){err.textContent='The earlier period should start no more than 60 days before your last one.';return}
+    add(b);
+  }
+  S={period:period.sort(function(x,y){return x-y}),log:{},cycleLen:C,periodLen:P,demo:false,syncUser:S.syncUser};
+  persist();closeSheet();tab='today';animate=true;renderAll();toast('You are set. Petal will adjust as you log.');
+}
+
+/* ---------- actions ---------- */
+function ensureReal(){if(S.demo){openSheet({t:'setup',demo:true});return false}return true}
+function setPeriod(n,on){
+  if(!ensureReal())return false;
+  var i=S.period.indexOf(n);
+  if(on&&i<0)S.period.push(n);
+  if(!on&&i>=0)S.period.splice(i,1);
+  S.period.sort(function(a,b){return a-b});persist();return true;
+}
+function fillRun(n){
+  if(!ensureReal())return;
+  compute();
+  for(var d=0;d<A.P;d++){if(n+d<=TODAY&&S.period.indexOf(n+d)<0)S.period.push(n+d)}
+  S.period.sort(function(a,b){return a-b});persist();renderAll();toast('Period logged');
+}
+function toggleTag(n,k,v){
+  if(!ensureReal())return;
+  var e=S.log[n]||(S.log[n]={mood:[],sym:[],flow:''});
+  e.mood=e.mood||[];e.sym=e.sym||[];
+  if(k==='flow')e.flow=e.flow===v?'':v;
+  else{var i=e[k].indexOf(v);if(i>=0)e[k].splice(i,1);else e[k].push(v)}
+  if(!e.mood.length&&!e.sym.length&&!e.flow)delete S.log[n];
+  persist();
+}
+function exportData(){
+  var log={};Object.keys(S.log).forEach(function(k){log[keyOf(+k)]=S.log[k]});
+  return JSON.stringify({periodDays:S.period.map(keyOf),log:log,typicalCycle:S.cycleLen,typicalPeriod:S.periodLen},null,2);
+}
+function copyData(){
+  var txt=exportData(),area=$('#copy-area');
+  function fallback(){area.innerHTML='<textarea id="copy-box" readonly aria-label="Your data"></textarea>';var t=$('#copy-box');t.value=txt;t.focus();t.select()}
+  try{navigator.clipboard.writeText(txt).then(function(){toast('Copied to clipboard')},fallback)}catch(e){fallback()}
+}
+var toastTimer;
+function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true},2400)}
+function toggleTheme(){
+  var root=document.documentElement,cur=root.getAttribute('data-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),next=cur==='dark'?'light':'dark';
+  root.setAttribute('data-theme',next);
+  try{localStorage.setItem(THEME,next)}catch(e){}
+}
+try{var th=localStorage.getItem(THEME);if(th)document.documentElement.setAttribute('data-theme',th)}catch(e){}
+
+var panel=$('#panel'),view=$('#view'),banner=$('#banner');
+function renderAll(){
+  compute();
+  banner.innerHTML=S.demo?'<div class="banner"><span>You are looking at sample data.</span><button class="btn" data-act="setup">Add my dates</button></div>':'';
+  view.innerHTML=tab==='today'?viewToday():tab==='cal'?viewCal():tab==='learn'?viewLearn():viewInsights();
+  var ring=view.querySelector('.ring');
+  if(ring&&animate)ring.classList.add('anim');
+  animate=false;
+  document.querySelectorAll('.tab').forEach(function(b){b.setAttribute('aria-current',b.dataset.v===tab?'page':'false')});
+  if(sheetKind&&sheetKind.t==='day'){var sc=panel.scrollTop;panel.innerHTML=dayHTML(sheetKind.n);panel.scrollTop=sc}
+}
+
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-act]');if(!t)return;
+  var a=t.dataset.act,n=t.dataset.n!==undefined?+t.dataset.n:null,v=t.dataset.v;
+  switch(a){
+    case 'tab':tab=v;animate=true;eraseAsk=false;window.scrollTo(0,0);if(sheetKind)closeSheet();renderAll();break;
+    case 'theme':toggleTheme();break;
+    case 'setup':openSheet({t:'setup',demo:S.demo});break;
+    case 'setup-save':saveSetup();break;
+    case 'close':closeSheet();break;
+    case 'start-today':if(setPeriod(TODAY,true)){renderAll();toast('Period day logged')}break;
+    case 'undo-today':if(setPeriod(TODAY,false))renderAll();break;
+    case 'tag':toggleTag(n,t.dataset.k,v);renderAll();break;
+    case 'cal-prev':cal.m--;if(cal.m<0){cal.m=11;cal.y--}renderAll();break;
+    case 'cal-next':cal.m++;if(cal.m>11){cal.m=0;cal.y++}renderAll();break;
+    case 'day':openSheet({t:'day',n:n});break;
+    case 'period':if(setPeriod(n,v==='on'))renderAll();break;
+    case 'fill':fillRun(n);break;
+    case 'acct':linkSent='';acctConfirm=false;openSheet({t:'acct'});break;
+    case 'send-link':sendLink();break;
+    case 'sync-now':pull();break;
+    case 'signout':signOut(false);break;
+    case 'signout-wipe':signOut(true);break;
+    case 'cloud-delete':acctConfirm=true;refreshSheet();break;
+    case 'cloud-delete-no':acctConfirm=false;refreshSheet();break;
+    case 'cloud-delete-yes':deleteCloud();break;
+    case 'copy':copyData();break;
+    case 'erase':eraseAsk=true;renderAll();break;
+    case 'erase-cancel':eraseAsk=false;renderAll();break;
+    case 'erase-yes':
+      S={period:[],log:{},cycleLen:28,periodLen:5,demo:false,syncUser:S.syncUser};persist();eraseAsk=false;tab='today';animate=true;renderAll();toast('All data erased');break;
+  }
+});
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.id==='chk'&&t.value){$('#chk-out').innerHTML=dateCard(fromKey(t.value))}
+  if(t.id==='set-c'||t.id==='set-p'){
+    if(!ensureReal()){renderAll();return}
+    S.cycleLen=+$('#set-c').value;S.periodLen=+$('#set-p').value;persist();renderAll();toast('Saved');
+  }
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sheetKind)closeSheet()});
+
+/* ---------- account and cloud sync ---------- */
+var XICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function esc(t){return String(t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function emptyState(){return {period:[],log:{},cycleLen:28,periodLen:5,demo:false,updatedAt:0}}
+function syncText(){
+  return {off:'Not signed in',pulling:'Loading your data...',saving:'Saving to your account...',ok:'Backed up and synced',err:'Could not reach the server. Petal will retry.'}[syncState]||''
+}
+function setSync(st){
+  syncState=st;
+  var dot=$('#acct-dot');if(dot)dot.className='dot'+(st==='ok'?' ok':(st==='saving'||st==='pulling')?' busy':st==='err'?' err':'');
+  var line=$('#sync-line');if(line)line.textContent=syncText();
+}
+function refreshSheet(){if(sheetKind&&sheetKind.t==='acct')panel.innerHTML=acctHTML()}
+function acctHTML(){
+  var head='<div class="sheet-head"><div><p class="eyebrow">Backup and sync</p><h2>Your account</h2></div><button class="icon-btn" data-act="close" aria-label="Close">'+XICON+'</button></div>';
+  if(user){
+    if(acctConfirm)return head+'<p class="callout warn">This deletes the copy of your data stored in your account and signs you out. Your data stays on this device.</p><div class="two"><button class="btn ghost" data-act="cloud-delete-no">Keep it</button><button class="btn warn" data-act="cloud-delete-yes">Delete cloud data</button></div>';
+    return head+'<p>Signed in as <strong>'+esc(user.email||'your account')+'</strong></p>'+
+      '<p><span class="pill"><i></i><span id="sync-line">'+syncText()+'</span></span></p>'+
+      '<p class="muted">Your data is stored in your account so you can open Petal on any device. Each account can only read its own data.</p>'+
+      '<button class="btn ghost block" data-act="sync-now">Sync now</button>'+
+      '<button class="btn ghost block" data-act="signout">Sign out</button>'+
+      '<button class="btn ghost block" data-act="signout-wipe">Sign out and remove data from this device</button>'+
+      '<button class="btn warn block" data-act="cloud-delete">Delete my cloud data</button>';
+  }
+  if(linkSent)return head+'<p class="callout">We sent a sign-in link to <strong>'+esc(linkSent)+'</strong>. Open it on this device to finish signing in. It can take a minute, so check your spam folder too.</p>';
+  return head+'<p>Sign in to back up your data and use Petal on more than one device. It is optional.</p>'+
+    '<div class="field"><label for="acct-email">Email</label><input type="email" id="acct-email" autocomplete="email" inputmode="email" placeholder="you@example.com"></div>'+
+    '<label class="check"><input type="checkbox" id="acct-consent"><span>I understand my period data will be stored on a server and linked to my email. I can delete it at any time.</span></label>'+
+    '<p class="err" id="acct-err" role="alert"></p>'+
+    '<button class="btn primary" data-act="send-link">Email me a sign-in link</button>'+
+    '<p class="hint">No password needed.</p>';
+}
+function sendLink(){
+  var email=($('#acct-email').value||'').trim(),err=$('#acct-err');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){err.textContent='Enter a valid email address.';return}
+  if(!$('#acct-consent').checked){err.textContent='Tick the box to continue.';return}
+  err.textContent='';
+  var opts={};
+  if(location.protocol==='http:'||location.protocol==='https:')opts.emailRedirectTo=location.origin+location.pathname;
+  sb.auth.signInWithOtp({email:email,options:opts}).then(function(r){
+    if(r.error){err.textContent=r.error.message;return}
+    linkSent=email;refreshSheet();
+  },function(){err.textContent='Could not reach the server. Check your connection and try again.'});
+}
+function signOut(wipe){
+  sb.auth.signOut().then(function(){
+    user=null;setSync('off');
+    if(wipe){try{localStorage.removeItem(KEY)}catch(e){}S=demo()}
+    closeSheet();renderAll();toast(wipe?'Signed out and cleared this device':'Signed out');
+  });
+}
+function deleteCloud(){
+  if(!user)return;
+  sb.from('cycle_data').delete().eq('user_id',user.id).then(function(r){
+    if(r.error){toast('Could not delete. Try again.');return}
+    delete S.syncUser;if(!S.demo)writeStore();
+    acctConfirm=false;
+    return sb.auth.signOut().then(function(){user=null;setSync('off');closeSheet();renderAll();toast('Cloud data deleted')});
+  },function(){toast('Could not reach the server.')});
+}
+function exportState(){return {period:S.period,log:S.log,cycleLen:S.cycleLen,periodLen:S.periodLen}}
+function hasData(){return !S.demo&&(S.period.length>0||Object.keys(S.log).length>0)}
+function schedulePush(){
+  if(!sb||!user)return;
+  pending=true;clearTimeout(pushTimer);setSync('saving');
+  pushTimer=setTimeout(push,900);
+}
+function push(){
+  pending=false;
+  if(!sb||!user||S.demo)return Promise.resolve();
+  var stamp=S.updatedAt||Date.now();
+  return sb.from('cycle_data').upsert({user_id:user.id,data:exportState(),updated_at:new Date(stamp).toISOString()}).then(function(r){
+    if(r.error){setSync('err');return}
+    S.syncUser=user.id;writeStore();setSync('ok');
+  },function(){setSync('err')});
+}
+function adopt(rd,rt){
+  S={period:rd.period.slice().sort(function(a,b){return a-b}),log:rd.log||{},cycleLen:rd.cycleLen||28,periodLen:rd.periodLen||5,demo:false,updatedAt:rt,syncUser:user.id};
+  writeStore();setSync('ok');renderAll();
+}
+function mergeInto(rd,rt){
+  var per=Array.from(new Set(S.period.concat(rd.period))).sort(function(a,b){return a-b}),log={};
+  [rd.log||{},S.log].forEach(function(src){
+    Object.keys(src).forEach(function(k){
+      var e=log[k]||(log[k]={mood:[],sym:[],flow:''}),x=src[k];
+      (x.mood||[]).forEach(function(v){if(e.mood.indexOf(v)<0)e.mood.push(v)});
+      (x.sym||[]).forEach(function(v){if(e.sym.indexOf(v)<0)e.sym.push(v)});
+      if(x.flow)e.flow=x.flow;
+    });
+  });
+  var localNewer=(S.updatedAt||0)>rt;
+  S={period:per,log:log,cycleLen:localNewer?S.cycleLen:(rd.cycleLen||S.cycleLen),periodLen:localNewer?S.periodLen:(rd.periodLen||S.periodLen),demo:false,updatedAt:Date.now(),syncUser:user.id};
+  writeStore();renderAll();return push();
+}
+function pull(){
+  if(!sb||!user)return Promise.resolve();
+  setSync('pulling');
+  return sb.from('cycle_data').select('data,updated_at').eq('user_id',user.id).maybeSingle().then(function(r){
+    if(r.error){setSync('err');return}
+    var rd=r.data&&r.data.data,rt=r.data?Date.parse(r.data.updated_at):0,hasRemote=!!(rd&&Array.isArray(rd.period));
+    if(S.syncUser&&S.syncUser!==user.id){S=emptyState();writeStore();renderAll()}
+    if(!hasRemote){if(hasData())return push();setSync('ok');return}
+    if(S.demo||(!hasData()&&S.syncUser!==user.id)){adopt(rd,rt);return}
+    if(S.syncUser!==user.id)return mergeInto(rd,rt);
+    var lt=S.updatedAt||0;
+    if(rt>lt)adopt(rd,rt);
+    else if(lt>rt)return push();
+    else setSync('ok');
+  },function(){setSync('err')});
+}
+if(sb){
+  $('#acct-btn').hidden=false;
+  sb.auth.onAuthStateChange(function(ev,session){
+    var u=session?session.user:null;
+    setTimeout(function(){
+      if(u&&(!user||user.id!==u.id)){
+        user=u;
+        pull().then(function(){if(ev==='SIGNED_IN')toast('Signed in');refreshSheet();renderAll()});
+      }else if(!u){user=null;setSync('off')}
+    },0);
+  });
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&user&&!pending)pull()});
+}
+
+renderAll();
+})();
+</script>
+
+</body>
+</html>
